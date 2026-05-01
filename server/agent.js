@@ -52,14 +52,33 @@ function extractJson(text) {
     return null;
 }
 
+function getLanguageFromFilename(filename) {
+    const ext = path.extname(filename).toLowerCase();
+    const langMap = {
+        '.js': 'JavaScript', '.jsx': 'JavaScript (React)', '.ts': 'TypeScript', '.tsx': 'TypeScript (React)',
+        '.py': 'Python', '.pyw': 'Python',
+        '.cs': 'C#', '.csx': 'C#',
+        '.go': 'Go',
+        '.rs': 'Rust',
+        '.java': 'Java',
+        '.cpp': 'C++', '.cxx': 'C++', '.cc': 'C++', '.hpp': 'C++', '.h': 'C/C++',
+        '.c': 'C',
+        '.php': 'PHP', '.php3': 'PHP', '.php4': 'PHP', '.php5': 'PHP', '.phtml': 'PHP',
+        '.css': 'CSS', '.scss': 'SCSS', '.sass': 'SASS', '.less': 'LESS',
+        '.html': 'HTML', '.htm': 'HTML', '.xhtml': 'XHTML',
+    };
+    return langMap[ext] || 'code';
+}
+
 async function analyzeCodeWithAI(code, filename) {
+    const language = getLanguageFromFilename(filename);
     const content = await callOpenRouter([
         {
             role: 'user',
             content: [
                 {
                     type: 'text',
-                    text: `You are an expert code reviewer. Analyze the file ${filename} for issues, best practices, and improvements.`,
+                    text: `You are an expert ${language} code reviewer. Analyze the file ${filename} for issues, best practices, and improvements.`,
                 },
                 { type: 'text', text: code },
                 {
@@ -95,13 +114,14 @@ async function analyzeCodeWithAI(code, filename) {
 }
 
 async function suggestFixWithAI(code, filePath, issue) {
+    const language = getLanguageFromFilename(filePath);
     const content = await callOpenRouter([
         {
             role: 'user',
             content: [
                 {
                     type: 'text',
-                    text: `You are fixing an issue in ${filePath}. Provide a corrected version of the code.`,
+                    text: `You are fixing an issue in ${language} file ${filePath}. Provide a corrected version of the code.`,
                 },
                 {
                     type: 'text',
@@ -200,7 +220,19 @@ async function runAgentReview({ targetPath, emitLog }) {
 
     const candidates = allFiles.filter((file) => {
         const ext = path.extname(file.name).toLowerCase();
-        return ['.js', '.jsx', '.ts', '.tsx'].includes(ext);
+        return [
+            '.js', '.jsx', '.ts', '.tsx',
+            '.py', '.pyw',
+            '.cs', '.csx',
+            '.go',
+            '.rs',
+            '.java',
+            '.cpp', '.cxx', '.cc', '.hpp', '.h',
+            '.c',
+            '.php', '.php3', '.php4', '.php5', '.phtml',
+            '.css', '.scss', '.sass', '.less',
+            '.html', '.htm', '.xhtml',
+        ].includes(ext);
     });
 
     log(`Found ${candidates.length} files to analyze.`);
