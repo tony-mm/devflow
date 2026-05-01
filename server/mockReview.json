@@ -1,0 +1,38 @@
+{
+  "id": "mock-0001",
+  "timestamp": "2026-05-01T00:00:00.000Z",
+  "targetPath": "./client/src",
+  "files": [
+    {
+      "path": "App.jsx",
+      "issues": [
+        {
+          "line": 12,
+          "severity": "warning",
+          "message": "Effect dependencies are missing in useEffect.",
+          "suggestion": "Include dependencies or refactor into a stable callback."
+        },
+        {
+          "line": 44,
+          "severity": "info",
+          "message": "Consider extracting the review card into a component.",
+          "suggestion": "Create a ReviewCard component for readability."
+        }
+      ]
+    },
+    {
+      "path": "components/ScoreGauge.jsx",
+      "issues": [
+        {
+          "line": 28,
+          "severity": "info",
+          "message": "Add accessible labels for the gauge.",
+          "suggestion": "Add aria-label and title attributes on the SVG."
+        }
+      ]
+    }
+  ],
+  "summary": "Reviewed 2 files. Errors: 0. Warnings: 1. Info: 2.",
+  "score": 78,
+  "prDescription": "# PR Description\n\n## Summary\nDemo review generated sample findings.\n\n## Changes\n- Identified missing dependencies and readability improvements.\n\n## Testing\n- Not run (demo mode)."
+}
