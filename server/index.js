@@ -123,10 +123,32 @@ app.post('/api/fix', async (req, res) => {
                 fixResult = await suggestFixWithAI(code, filePath, issue);
             } catch (error) {
                 console.error('Fix generation error:', error);
-                fixResult = { fixedCode: code, summary: 'OpenRouter error, returning original code.' };
+                // Fallback: try to load mock review data for a mock fix suggestion
+                try {
+                    const mockContent = await readFileAsync(MOCK_REVIEW_PATH);
+                    const mock = JSON.parse(mockContent);
+                    const mockSuggestion = mock.files?.[0]?.issues?.[0]?.suggestion || 'No suggestion available';
+                    fixResult = {
+                        fixedCode: code,
+                        summary: `Using mock fix suggestion: ${mockSuggestion}`,
+                    };
+                } catch (_) {
+                    fixResult = { fixedCode: code, summary: 'OpenRouter error, returning original code.' };
+                }
             }
         } else {
-            fixResult = { fixedCode: code, summary: 'No API key, returning original code.' };
+            // No API key – also attempt to use mock data
+            try {
+                const mockContent = await readFileAsync(MOCK_REVIEW_PATH);
+                const mock = JSON.parse(mockContent);
+                const mockSuggestion = mock.files?.[0]?.issues?.[0]?.suggestion || 'No suggestion available';
+                fixResult = {
+                    fixedCode: code,
+                    summary: `No API key, using mock fix suggestion: ${mockSuggestion}`,
+                };
+            } catch (_) {
+                fixResult = { fixedCode: code, summary: 'No API key, returning original code.' };
+            }
         }
 
         res.json({
@@ -160,18 +182,37 @@ app.post('/api/pr-description', async (req, res) => {
         }
 
         if (!description) {
-            description = [
-                '# PR Description',
-                '',
-                '## Summary',
-                diff,
-                '',
-                '## Changes',
-                '- Automated review findings summarized.',
-                '',
-                '## Testing',
-                '- Not run (demo mode).',
-            ].join('\n');
+            // Try to use the mock review's PR description as a fallback.
+            try {
+                const mockContent = await readFileAsync(MOCK_REVIEW_PATH);
+                const mock = JSON.parse(mockContent);
+                description = mock.prDescription || [
+                    '# PR Description',
+                    '',
+                    '## Summary',
+                    diff,
+                    '',
+                    '## Changes',
+                    '- Automated review findings summarized.',
+                    '',
+                    '## Testing',
+                    '- Not run (demo mode).',
+                ].join('\n');
+            } catch (_) {
+                // If mock data cannot be read, fall back to the static template.
+                description = [
+                    '# PR Description',
+                    '',
+                    '## Summary',
+                    diff,
+                    '',
+                    '## Changes',
+                    '- Automated review findings summarized.',
+                    '',
+                    '## Testing',
+                    '- Not run (demo mode).',
+                ].join('\n');
+            }
         }
 
         res.json({ description });
