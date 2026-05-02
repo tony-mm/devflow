@@ -122,7 +122,8 @@ app.post('/api/fix', async (req, res) => {
             try {
                 fixResult = await suggestFixWithAI(code, filePath, issue);
             } catch (error) {
-                fixResult = { fixedCode: code, summary: 'Fix generation failed, returning original code.' };
+                console.error('Fix generation error:', error);
+                fixResult = { fixedCode: code, summary: 'OpenRouter error, returning original code.' };
             }
         } else {
             fixResult = { fixedCode: code, summary: 'No API key, returning original code.' };
